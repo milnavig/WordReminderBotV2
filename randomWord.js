@@ -18,7 +18,7 @@ function sendRandomWord(bot, words) {
         reply_markup: JSON.stringify({
           inline_keyboard: [
             [{ text: 'Вивчати', callback_data: `learn_${random_id}` }],
-            [{ text: 'Приклади використання', callback_data: `context_${random_id}` }],
+            [{ text: 'Приклади використання', callback_data: `context_${random_id}` }, { text: 'Синоніми', callback_data: `synonym_${random_id}` }],
           ]
         })
       };
