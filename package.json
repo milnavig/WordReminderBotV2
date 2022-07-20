@@ -12,6 +12,7 @@
     "csv": "^6.2.0",
     "dotenv": "^16.0.1",
     "google-translate-token": "^1.0.0",
+    "locallydb": "0.0.9",
     "node-telegram-bot-api": "^0.58.0",
     "reverso-api": "^2.21.1",
     "translate": "^1.4.1"

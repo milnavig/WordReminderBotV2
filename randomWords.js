@@ -2,7 +2,7 @@ require('dotenv').config();
 const token = require('google-translate-token');
 const translate = require('translate');
 
-function sendRandomWord(bot, words) {
+function sendRandomWord(bot, words, user) {
   const sendOneWord = () => {
     const current_hour = new Date().getHours();
     if (current_hour < process.env.START_HOUR && current_hour > process.env.END_HOUR) return;
@@ -17,7 +17,7 @@ function sendRandomWord(bot, words) {
       const options = {
         reply_markup: JSON.stringify({
           inline_keyboard: [
-            [{ text: 'Вивчати', callback_data: `learn_${random_id}` }],
+            [{ text: 'Вивчати', callback_data: `memorize_${random_id}` }],
             [{ text: 'Приклади використання', callback_data: `context_${random_id}` }, { text: 'Синоніми', callback_data: `synonym_${random_id}` }],
           ]
         })
@@ -26,18 +26,17 @@ function sendRandomWord(bot, words) {
 
       const [word_popularity, word_english, part_of_speech] = words[random_id];
       translate(word_english, { to: "uk" }).then(word_ukrainian => {
-        bot.sendMessage(process.env.CHAT_ID, generateString(word_popularity, word_english, word_ukrainian, part_of_speech), options);
+        bot.sendMessage(user.chatId, generateString(word_popularity, word_english, word_ukrainian, part_of_speech), options);
       });
-    });
+    }).catch(err => console.log('Problem with Google translator'));
   }
 
-  setInterval(sendOneWord, process.env.TIME_INTERVAL * 60 * 1000);
+  setInterval(sendOneWord, user.interval * 60 * 1000);
 }
 
 function sendRandomWords(bot, num, words) {
-  const current_hour = new Date().getHours();
-  if (current_hour < process.env.START_HOUR && current_hour > process.env.END_HOUR) return;
-
+  if (words.length === 0) bot.sendMessage(process.env.CHAT_ID, 'Відсутні слова для вивчення');
+  if (words.length < num) num = words.length;
   token.get('Token').then(res => {
     translate.engine = "google"; // Or "yandex", "libre", "deepl"
     translate.key = res.value;
@@ -56,12 +55,31 @@ function sendRandomWords(bot, num, words) {
       });
       bot.sendMessage(process.env.CHAT_ID, words_text.join('\n'));
     });
-  });
+  }).catch(err => console.log('Problem with Google translator'));
+}
+
+function getPartOfSpeech(part) {
+  switch(part) {
+    case 'n':
+      return 'noun';
+    case 'p':
+      return 'pronoun';
+    case 'v':
+      return 'verb';
+    case 'a':
+      return 'adjective';
+    case 'c':
+      return 'conjunction';
+    case 'i':
+      return 'interjection';
+    default:
+      return part;
+  }
 }
 
 function generateString(word_popularity, word_english, word_ukrainian, part_of_speech, id = null) {
-  let isList = id !== null ? `${id} ` : ``;
-  return isList + `🈂️ ${word_popularity} 🇺🇸 ${word_english} 🇺🇦 ${word_ukrainian} | ${part_of_speech}`;
+  let isList = id !== null ? `${id + 1} ` : ``;
+  return isList + `🈂️ ${word_popularity} 🇺🇸 ${word_english} 🇺🇦 ${word_ukrainian} (${getPartOfSpeech(part_of_speech)})`;
 }
 
 module.exports = {
